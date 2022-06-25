@@ -16,3 +16,15 @@ the password and the PACK fields.
 The app dumps the complete memory and tries to show the content in ASCII. As the password and 
 PACK are not readable we just see 0x00 instead.
 
+This app uses the low level protocol **NFCA** for the communication with the tag. There should be an 
+automated font size adjusting on the dump data but I'm lazy at this point, just fit the value in the 
+MainActivity-view to your needs:
+
+```plaintext
+<TextView
+    android:id="@+id/tvMainReadResult"
+    ...
+    android:textSize="14sp"
+    android:typeface="monospace"
+    android:textStyle="normal" />
+```
