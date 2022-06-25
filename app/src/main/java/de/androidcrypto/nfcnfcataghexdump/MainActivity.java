@@ -1,7 +1,12 @@
 package de.androidcrypto.nfcnfcataghexdump;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.nfc.NfcAdapter;
 import android.nfc.Tag;
 import android.nfc.TagLostException;
@@ -11,22 +16,43 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.widget.Toolbar;
+
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 public class MainActivity extends AppCompatActivity implements NfcAdapter.ReaderCallback {
 
     TextView dumpField, readResult;
     private NfcAdapter mNfcAdapter;
+    String dumpExportString = "";
+    String tagIdString = "";
+    String tagTypeString = "";
+    private static final int REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE = 100;
+    Context contextSave;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Toolbar myToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(myToolbar);
+        contextSave = getApplicationContext();
+
         dumpField = findViewById(R.id.tvMainDump1);
         readResult = findViewById(R.id.tvMainReadResult);
 
@@ -64,6 +90,7 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 }
 
                 nfcA.connect();
+                dumpExportString = "";
                 runOnUiThread(() -> {
                     readResult.setText("");
                 });
@@ -84,8 +111,9 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 int nfcaMaxTranceiveLength = nfcA.getMaxTransceiveLength(); // important for the readFast command
                 int ntagPages = NfcIdentifyNtag.getIdentifiedNtagPages();
                 int ntagMemoryBytes = NfcIdentifyNtag.getIdentifiedNtagMemoryBytes();
-                String tagIdString = getDec(tag.getId());
-                String nfcaContent = "raw data of " + NfcIdentifyNtag.getIdentifiedNtagType() + "\n" +
+                tagIdString = getDec(tag.getId());
+                tagTypeString = NfcIdentifyNtag.getIdentifiedNtagType();
+                String nfcaContent = "raw data of " + tagTypeString + "\n" +
                         "number of pages: " + ntagPages +
                         " total memory: " + ntagMemoryBytes +
                         " bytes\n" +
@@ -154,6 +182,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     String finalNfcaRawText = nfcaContent;
                     String dumpContent = dumpContentHeader + "\n\nUser memory content:\n" + HexDumpOwn.prettyPrint(ntagMemory);
                     dumpContent = dumpContent + "\n\n" + dumpContentFooter;
+                    System.out.println(dumpContent);
+                    dumpExportString = dumpContent;
                     String finalDumpContent = dumpContent;
                     runOnUiThread(() -> {
                         dumpField.setText(finalDumpContent);
@@ -246,6 +276,105 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         startActivity(intent);
     }
 
+    private void exportDumpMail() {
+        if (dumpExportString.isEmpty()) {
+            writeToUiToast("Scan a tag first before sending emails :-)");
+            return;
+        }
+        String subject = "Dump NFC-Tag " + tagTypeString + " UID: " + tagIdString;
+        String body = dumpExportString;
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.putExtra(Intent.EXTRA_SUBJECT, subject);
+        intent.putExtra(Intent.EXTRA_TEXT, body);
+        if (intent.resolveActivity(getPackageManager()) != null) {
+            startActivity(intent);
+        }
+    }
+
+    private void exportDumpFile() {
+        if (dumpExportString.isEmpty()) {
+            writeToUiToast("Scan a tag first before writing files :-)");
+            return;
+        }
+        verifyPermissionsWriteString();
+    }
+
+    // section external storage permission check
+    private void verifyPermissionsWriteString() {
+        String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        if (ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                permissions[0]) == PackageManager.PERMISSION_GRANTED
+                && ContextCompat.checkSelfPermission(this.getApplicationContext(),
+                permissions[1]) == PackageManager.PERMISSION_GRANTED) {
+            writeStringToExternalSharedStorage();
+        } else {
+            ActivityCompat.requestPermissions(this,
+                    permissions,
+                    REQUEST_PERMISSION_WRITE_EXTERNAL_STORAGE);
+        }
+    }
+
+    private void writeStringToExternalSharedStorage() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        // Optionally, specify a URI for the file that should appear in the
+        // system file picker when it loads.
+        //boolean pickerInitialUri = false;
+        //intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, pickerInitialUri);
+        // get filename from edittext
+        String filename = tagTypeString + "_" + tagIdString + ".txt";
+        // sanity check
+        if (filename.equals("")) {
+            writeToUiToast("scan a tag before writng the content to a file :-)");
+            return;
+        }
+        intent.putExtra(Intent.EXTRA_TITLE, filename);
+        fileSaverActivityResultLauncher.launch(intent);
+    }
+
+    ActivityResultLauncher<Intent> fileSaverActivityResultLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if (result.getResultCode() == Activity.RESULT_OK) {
+                        // There are no request codes
+                        Intent resultData = result.getData();
+                        // The result data contains a URI for the document or directory that
+                        // the user selected.
+                        Uri uri = null;
+                        if (resultData != null) {
+                            uri = resultData.getData();
+                            // Perform operations on the document using its URI.
+                            try {
+                                // get file content from edittext
+                                String fileContent = dumpExportString;
+                                writeTextToUri(uri, fileContent);
+                                String message = "file written to external shared storage: " + uri.toString();
+                                writeToUiToast("file written to external shared storage: " + uri.toString());
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                                writeToUiToast("ERROR: " + e.toString());
+                                return;
+                            }
+                        }
+                    }
+                }
+            });
+
+    private void writeTextToUri(Uri uri, String data) throws IOException {
+        try {
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(contextSave.getContentResolver().openOutputStream(uri));
+            outputStreamWriter.write(data);
+            outputStreamWriter.close();
+        } catch (IOException e) {
+            System.out.println("Exception File write failed: " + e.toString());
+        }
+    }
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -280,4 +409,33 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
         if (mNfcAdapter != null)
             mNfcAdapter.disableReaderMode(this);
     }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_activity_main, menu);
+
+        MenuItem mExportMail = menu.findItem(R.id.action_export_mail);
+        mExportMail.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                exportDumpMail();
+                return false;
+            }
+        });
+
+        MenuItem mExportFile = menu.findItem(R.id.action_export_file);
+        mExportFile.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                //Intent i = new Intent(MainActivity.this, AddEntryActivity.class);
+                //startActivity(i);
+                exportDumpFile();
+                return false;
+            }
+        });
+        return super.onCreateOptionsMenu(menu);
+    }
+
 }

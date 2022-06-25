@@ -28,3 +28,39 @@ MainActivity-view to your needs:
     android:typeface="monospace"
     android:textStyle="normal" />
 ```
+
+Add in AndroidManifest.xml:
+```plaintext
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+```
+
+Beginning with Android 11 you need to use queries for "intent.resolveActivity(getPackageManager()", 
+so add im AndroidManifest.xml:
+```plaintext
+...
+<queries>
+    <intent>
+        <action android:name="android.intent.action.SENDTO" />
+        <data android:scheme="*" />
+    </intent>
+</queries>
+```
+
+
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/main_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/colorPrimary"
+        android:elevation="@dimen/toolbar_elevation"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+
