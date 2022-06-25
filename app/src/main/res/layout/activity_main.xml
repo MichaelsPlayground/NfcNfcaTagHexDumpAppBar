@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="This app dumps data with NCFA from a NFC-Tag of type NXP NTAG216 only."
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvInformation"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="When a tag is discovered the data from some specific (internal) pages will be read."
+            android:textAlignment="center"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvMainDump1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text=""
+            android:textAlignment="textStart"
+            android:textSize="13sp"
+            android:typeface="monospace"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvMainReadResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="10dp"
+            android:text="read result"
+            android:textAlignment="textStart"
+            android:textSize="14sp"
+            android:typeface="monospace"
+            android:textStyle="normal" />
+
+    </LinearLayout>
+</ScrollView>
