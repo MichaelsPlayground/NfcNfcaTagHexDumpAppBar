@@ -35,6 +35,9 @@ Add in AndroidManifest.xml:
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="28"/>
+        
+for Toolbar:
+  android:theme="@style/Theme.AppCompat.Light.NoActionBar"        
 ```
 
 Beginning with Android 11 you need to use queries for "intent.resolveActivity(getPackageManager()", 
