@@ -2,34 +2,34 @@ package de.androidcrypto.nfcnfcataghexdump;
 
 public class HexDumpOwn {
 
-    //static int numberHexInt = 16; // anzahl der hexbytes pro zeile, minimum 6
-    static int numberHexInt = 8; // anzahl der hexbytes pro zeile, minimum 6
+    //static int numberHexInt = 16; // number of hexbytes pro line, minimum 6
+    static int numberHexInt = 8; // number of hexbytes per line, minimum 6
     static boolean printHeaderBool = true;
     static boolean printDecimalAddressBool = false;
     //boolean printHexAddressBool = true;
     static boolean printHexAddressBool = true;
-    static boolean printAscii = true; // false keine ascii-zeichen
+    static boolean printAscii = true; // false = no ascii characters
     static boolean printDotBool = true;
 
     public static String prettyPrint(byte[] input) {
         String output = "";
-        String outputLineString = ""; // eine ausgabezeile
+        String outputLineString = ""; // one output line
         int filesizeLong = input.length;
 
         int adresseInt = 0;
         String asciiZeileString = "";
         outputLineString = "";
-        int laengeVorspannInt = 0; // dezimal + 9, hex + 9, dezimal+hex + 18
+        int laengeVorspannInt = 0; // decimal + 9, hex + 9, decimal+hex + 18
         if (printHeaderBool == true) {
             if (printDecimalAddressBool == true) {
-                outputLineString = outputLineString + "Dezimal  ";
+                outputLineString = outputLineString + "Decimal  ";
                 laengeVorspannInt = laengeVorspannInt + 9;
             }
             if (printHexAddressBool == true) {
                 outputLineString = outputLineString + "Hex      ";
                 laengeVorspannInt = laengeVorspannInt + 9;
             }
-            outputLineString = outputLineString + formatMitLeerzeichenRechts("Hexadezimalwerte", (numberHexInt * 3));
+            outputLineString = outputLineString + formatMitLeerzeichenRechts("Hexadecimalc", (numberHexInt * 3));
             if (printAscii == true) {
                 outputLineString = outputLineString + (char) 124 + "ASCII";
             }
@@ -37,17 +37,17 @@ public class HexDumpOwn {
         // nutzdaten
         for (int i = 0; i < filesizeLong; i++) {
             outputLineString = "";
-            // ausgabe der adresse als dezimalzahl
+            // output the address in decimal values
             if (printDecimalAddressBool == true) {
                 outputLineString = outputLineString + formatMitNullenLinks(String.valueOf(adresseInt), 8) + ":";
             }
-            // ausgabe der adresse als hexwert
+            // output the address in hex values
             if (printHexAddressBool == true) {
                 outputLineString = outputLineString + formatMitNullenLinks(Integer.toHexString(adresseInt), 8) + ":";
             }
             asciiZeileString = "";
             for (int j = 0; j < numberHexInt; j++) {
-                // überprüfung ob die maximale zeichenzahl überschritten wird
+                // check for maximal characters
                 if (i < filesizeLong) {
                     outputLineString = outputLineString + byteToHexString(input[i]);
                     asciiZeileString = asciiZeileString + returnPrintableChar(input[i], printDotBool);
@@ -55,7 +55,7 @@ public class HexDumpOwn {
                     i++;
                 }
             }
-            i--; // korrektur des zählers für eine korrekte bearbeitung
+            i--; // correction of the counter
             if (printAscii == true) {
                 System.out.println(formatMitLeerzeichenRechts(outputLineString, (laengeVorspannInt + (numberHexInt * 3)))
                         + (char) 124 + formatMitLeerzeichenRechts(asciiZeileString, (2 + numberHexInt)));
@@ -90,11 +90,11 @@ public class HexDumpOwn {
     }
 
     public static char returnPrintableChar(byte inputByte, Boolean printDotBool) {
-        // gibt nur die ascii-zeichen aus folgenden bereichen zurück
-        // 48- 57 = 0-9
-        // 65- 90 = A-Z
-        // 97-122 = a-z
-        // wenn printDotBool = true dann ausgabe eines punktes statt leerzeichen
+        // ascii-zeichen from these ranges are printed
+        // 48 -  57 = 0-9
+        // 65 -  90 = A-Z
+        // 97 - 122 = a-z
+        // if printDotBool = true then print a dot "."
         char rueckgabeChar = 0;
         if (printDotBool == true) {
             rueckgabeChar = 46;
