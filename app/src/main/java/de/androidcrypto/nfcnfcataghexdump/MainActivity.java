@@ -140,7 +140,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                 if (footerMemory == null) {
                     writeToUiAppend(readResult, "ERROR on reading footer, aborted");
                 }
-                String dumpContentFooter = "Footer content:\n" + HexDumpOwn.prettyPrint(footerMemory);
+                // offset = footerStart * 4 = footerStart pages of 4 bytes each
+                String dumpContentFooter = "Footer content:\n" + HexDumpOwn.prettyPrint(footerMemory, footerStart * 4);
 
                 byte[] response;
                 try {
@@ -178,7 +179,8 @@ public class MainActivity extends AppCompatActivity implements NfcAdapter.Reader
                     nfcaContent = nfcaContent + "fast reading complete: " + "\n" + bytesToHex(ntagMemory) + "\n";
 
                     String finalNfcaRawText = nfcaContent;
-                    String dumpContent = dumpContentHeader + "\n\nUser memory content:\n" + HexDumpOwn.prettyPrint(ntagMemory);
+                    // offset = 16 = 4 pages of 4 bytes each
+                    String dumpContent = dumpContentHeader + "\n\nUser memory content:\n" + HexDumpOwn.prettyPrint(ntagMemory, 16);
                     dumpContent = dumpContent + "\n\n" + dumpContentFooter;
                     System.out.println(dumpContent);
                     dumpExportString = dumpContent;
